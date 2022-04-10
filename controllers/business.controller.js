@@ -156,20 +156,19 @@ const getOrders = async (req, res) => {
                 message: "Business not found"
             });
         }
-        const orders = await Product.find({ business_id: businessId });
+        const orders = await Order.find({ business_id: businessId });
         let products = []
         for(let i = 0; i < orders.length; i++) {
             let products = []
-            let business = await Business.findById(orders[i].business_id);
             for(let j = 0; j < orders[i].products.length; j++) {
-                const product = await Product.findById(orders[i].products[j].product_id).select("-business_id -__v");
+                const product = await Product.findById(orders[i].products[j].product_id);
                 products.push(product);
             }
             orders[i]._doc.products = products;
         }
         res.status(200).json({
             message: "Orders retrieved successfully",
-            products
+            orders
         });
     } catch (error) {
         res.status(500).json({
