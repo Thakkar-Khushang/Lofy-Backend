@@ -24,7 +24,6 @@ const businessSchema = mongoose.Schema({
     password: {type: String, required: "Password is required"},
     address: {type: String },
     city: {type: String },
-    coordinates: {type: String },
     views: {type: Number, default: 0},
 })
 

@@ -1,5 +1,6 @@
+const mongoose = require("mongoose");
 const Product = require("../models/product.model");
-const Order = require("../models/order.model");
+const Customer = require("../models/customer.model");
 
 const getAllProducts = async (req, res) => {
     try {
@@ -24,6 +25,7 @@ const addProduct = async (req, res) => {
         const {name, description, price} = req.body;
         const business_id = req.user.userId;
         const product = new Product({
+            _id: new mongoose.Types.ObjectId(),
             name,
             description,
             price,
@@ -47,7 +49,7 @@ const updateProduct = async (req, res) => {
         const {name, description, price} = req.body;
         const business_id = req.user.userId;
         const product = await Product.findById(req.params.id);
-        if(product.business_id !== business_id) {
+        if(product.business_id+"" !== business_id) {
             return res.status(401).json({
                 message: "You are not authorized to update this product"
             });
@@ -73,7 +75,7 @@ const deleteProduct = async (req, res) => {
     try {
         const business_id = req.user.userId;
         const product = await Product.findById(req.params.id);
-        if(product.business_id !== business_id) {
+        if(product.business_id+"" !== business_id) {
             return res.status(401).json({
                 message: "You are not authorized to delete this product"
             });
@@ -102,10 +104,22 @@ const productDetails = async (req, res) => {
 const addReview = async (req, res) => {
     try {
         const customer_id = req.user.userId;
+        const customer = await Customer.findById(customer_id);
+        if(!customer) {
+            return res.status(404).json({
+                message: "Customer not found"
+            });
+        }
         const {review, rating} = req.body;
+        if(!review || !rating) {
+            return res.status(400).json({
+                message: "Review and rating are required"
+            });
+        }
         const product = await Product.findById(req.params.id);
         product.reviews.push({
             customer_id,
+            customer_name: customer.name,
             review,
             rating
         });

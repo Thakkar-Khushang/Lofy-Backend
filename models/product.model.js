@@ -9,6 +9,7 @@ const productSchema = mongoose.Schema({
     rating: {type: Number, default: -1},
     reviews: [{
         customer_id: { type: mongoose.Schema.Types.ObjectId, ref: "Customer" },
+        customer_name: { type: String },
         review: {type: String },
         rating: {type: Number }
     }],

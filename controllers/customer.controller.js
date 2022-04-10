@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const Customer = require("../models/customer.model");
 const Business = require("../models/business.model");
 const Product = require("../models/product.model");
@@ -9,15 +10,35 @@ const { response } = require("express");
 const signup = async (req, res) => {
     try {
         const { email, password } = req.body;
-        bcrypt.hash(password, 100, function(err, hash) {
+        const customer = await Customer.findOne({ email })
+        if (customer) {
+            return res.status(400).json({
+                message: "Customer already exists"
+            });
+        }
+        bcrypt.hash(password, 10, async function(err, hash) {
             const customer = new Customer({
+                _id: new mongoose.Types.ObjectId(),
                 email,
                 password: hash
             });
             await customer.save();
+            const token = jwt.sign(
+                {
+                  userId: customer._id,
+                  email: customer.email,
+                  name: customer.name,
+                  userType: "customer"
+                },
+                process.env.JWT_SECRET_CUST,
+                {
+                  expiresIn: "30d",
+                }
+              );
             res.status(201).json({
                 message: "Customer created successfully",
-                customer
+                customer,
+                token
             });
         });
     } catch (error) {
@@ -44,7 +65,7 @@ const login = async (req, res) => {
                       userId: customer._id,
                       email: customer.email,
                       name: customer.name,
-                      userType: "business"
+                      userType: "customer"
                     },
                     process.env.JWT_SECRET_CUST,
                     {
@@ -73,26 +94,41 @@ const login = async (req, res) => {
 const seeBusinesses = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const customer = await Customer.findById(userId);
-        const businesses = await Business.find({ city: customer.city });
+        const customer = await Customer.findById(userId).select("-password");
+        const businesses = await Business.find({ city: customer.city }).select("-password");
         if(businesses.length === 0) {
             return res.status(404).json({
                 message: "No businesses found"
             });
         }
-        const topBusinesses = businesses.sort((a, b) => b.views - a.views).slice(0, 3);
+        let topBusinesses;
+        if(businesses.length > 3) {
+            topBusinesses = businesses.sort((a, b) => b.views - a.views).slice(0, 3);
+        }else{
+            topBusinesses = businesses.sort((a, b) => b.views - a.views);
+        }
         const categories = [];
+        let businessesUnderCategory = [];
         for(let i = 0; i < businesses.length; i++) {
-            if(!categories.includes(businesses[i].category)) {
-                categories.push({category: businesses[i].category, businesses: []});
+            const catIndex = categories.indexOf(businesses[i].category)
+            if(catIndex === -1) {
+                categories.push(businesses[i].category);
+                businessesUnderCategory.push([businesses[i]]);
+            } else{
+                businessesUnderCategory[catIndex].push(businesses[i]);
             }
-            categories[categories.indexOf(businesses[i].category)].businesses.push(businesses[i])
-
+        }
+        let finalCategories = [];
+        for(let i=0; i<categories.length; i++) {
+            finalCategories.push({
+                category: categories[i],
+                businesses: businessesUnderCategory[i]
+            })
         }
         res.status(200).json({
             message: "Businesses retrieved successfully",
             topBusinesses,
-            categories
+            categories: finalCategories
         });
     } catch (error) {
         res.status(500).json({
@@ -104,8 +140,8 @@ const seeBusinesses = async (req, res) => {
 
 const seeBusinessPage = async (req, res) => {
     try {
-        const businessId = req.params.businessId;
-        const business = await Business.findById(businessId);
+        const businessId = req.params.id;
+        const business = await Business.findById(businessId).select("-password");
         if(!business) {
             return res.status(404).json({
                 message: "Business not found"
@@ -113,7 +149,7 @@ const seeBusinessPage = async (req, res) => {
         }
         business.views += 1;
         await business.save();
-        const products = await Product.find({ businessId: businessId });
+        const products = await Product.find({ business_id: businessId });
         res.status(200).json({
             message: "Business retrieved successfully",
             business,
@@ -130,22 +166,34 @@ const seeBusinessPage = async (req, res) => {
 const customerOrders = async(req, res) =>{
     try{
         const userId = req.user.userId;
-        const customer = await Customer.findById(userId);
+        const customer = await Customer.findById(userId).select("-password");
         if(!customer) {
             return res.status(404).json({
                 message: "Customer not found"
             });
         }
-        const orders = await Order.find({customer_id: userId})
+        
+        const orders = await Order.find({customer_id: userId+""})
         if(orders.length == 0){
             return res.status(404).json({
                 message: "No orders found"
             });
         }
+        for(let i = 0; i < orders.length; i++) {
+            let products = []
+            let business = await Business.findById(orders[i].business_id);
+            for(let j = 0; j < orders[i].products.length; j++) {
+                const product = await Product.findById(orders[i].products[j].product_id).select("-business_id -__v");
+                products.push(product);
+            }
+            orders[i]._doc.products = products;
+            orders[i]._doc.business_name = business.name;
+        }
+
         res.status(200).json({
-            message: "Orders received successfully",
-            orders
-        })
+            message: "Orders retrieved successfully",
+            orders,
+        });
     } catch (error) {
         res.status(500).json({
             message: "Error fetching orders",
@@ -157,7 +205,7 @@ const customerOrders = async(req, res) =>{
 const placeOrder = async (req, res) => {
     try{
         const userId = req.user.userId;
-        const customer = await Customer.findById(userId);
+        const customer = await Customer.findById(userId).select("-password");
         if(!customer) {
             return res.status(404).json({
                 message: "Customer not found"
@@ -173,11 +221,13 @@ const placeOrder = async (req, res) => {
             })
         }
         const order = new Order({
+            _id: new mongoose.Types.ObjectId(),
             customer_id: userId,
             business_id: businessId,
             products,
             address: customer.address
         })
+        await order.save();
         res.status(200).json({
             message: "Order placed successfully",
             order
@@ -193,7 +243,7 @@ const placeOrder = async (req, res) => {
 const editCustomer = async (req, res) => {
     try {
         const userId = req.user.userId;
-        const customer = await Customer.findById(userId);
+        const customer = await Customer.findById(userId).select("-password");
         if(!customer) {
             return res.status(404).json({
                 message: "Customer not found"

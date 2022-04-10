@@ -7,8 +7,10 @@ const checkAuthBusiness = require("../middleware/checkAuthBusiness");
 
 router.get("/", productControllers.getAllProducts);
 router.get("/:id", productControllers.getProductById);
-router.post("/", checkAuthBusiness, productControllers.addProduct);
-router.put("/:id", checkAuthBusiness, productControllers.updateProduct);
-router.delete("/:id", checkAuthBusiness, productControllers.deleteProduct);
-router.get("/:id/details", productControllers.productDetails);
-router.post("/:id/review", checkAuthCustomer, productControllers.addReview);
+router.post("/add", checkAuthBusiness, productControllers.addProduct);
+router.put("/update/:id", checkAuthBusiness, productControllers.updateProduct);
+router.delete("/delete/:id", checkAuthBusiness, productControllers.deleteProduct);
+router.get("/details/:id", productControllers.productDetails);
+router.post("/review/:id", checkAuthCustomer, productControllers.addReview);
+
+module.exports = router;

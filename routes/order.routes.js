@@ -4,3 +4,5 @@ const orderControllers = require("../controllers/order.controller");
 
 router.get("/", orderControllers.getAllOrders);
 router.get("/:id", orderControllers.getOrderById);
+
+module.exports = router;

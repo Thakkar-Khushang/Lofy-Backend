@@ -1,9 +1,38 @@
+require("dotenv").config();
 const express = require('express');
+const bodyParser = require("body-parser");
 const cors = require('cors');
+const mongoose = require('mongoose');
+const Customer = require('./models/customer.model');
+const Business = require('./models/business.model');
+const Product = require('./models/product.model');
+const Order = require('./models/order.model');
 
 const app = express();
-
 const logger = require('./config/logger.js');
+
+//Connect to MongoDB client using mongoose
+mongoose
+  .connect(process.env.DBURI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => {
+    logger.info('Database Connected');
+    Customer.init();
+    Business.init();
+    Product.init();
+    Order.init();
+  })
+  .catch((err) => {
+    logger.error(`System: NIL >> ${err.toString()}`);
+  });
+
+mongoose.Promise = global.Promise;
+
+//Use body-parser to parse json body
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
