@@ -13,6 +13,7 @@ const businessSchema = mongoose.Schema({
         type: String,
         enum: ["Clothing", "Furniture", "Decor", "Cosmetics", "Food"]
     },
+    specialization: {type: String},
     phone: {type: String },
     email: {
         type: String, 

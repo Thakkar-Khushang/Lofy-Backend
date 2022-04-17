@@ -115,7 +115,7 @@ const updateProfile = async (req, res) => {
                 message: "Business not found"
             });
         }
-        const { name, address, city, phone, description, category } = req.body;
+        const { name, address, city, phone, description, category, specialization } = req.body;
         if(name) {
             business.name = name;
         }
@@ -133,6 +133,9 @@ const updateProfile = async (req, res) => {
         }
         if(category) {
             business.category = category;
+        }
+        if(specialization) {
+            business.specialization = specialization;
         }
         await business.save();
         res.status(200).json({
