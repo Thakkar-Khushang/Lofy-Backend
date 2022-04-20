@@ -75,8 +75,6 @@ app.use((error, req, res, next) => {
   });
 });
 
-const PORT = 3000;
-
 app.listen(PORT, () => {
-    logger.info(`Server is running on port ${PORT}`);
+    logger.info(`Server is running on port ${process.env.PORT || 3000}`);
 });
