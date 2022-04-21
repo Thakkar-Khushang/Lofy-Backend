@@ -5,6 +5,7 @@ const checkAuthCustomer = require("../middleware/checkAuthCustomer");
 
 router.post("/signup", customerControllers.signup);
 router.post("/login", customerControllers.login);
+router.get("/profile", checkAuthCustomer, customerControllers.customerProfile);
 router.patch("/update-profile", checkAuthCustomer, customerControllers.editCustomer);
 router.get("/see-businesses", checkAuthCustomer, customerControllers.seeBusinesses);
 router.get("/see-business/:id", checkAuthCustomer, customerControllers.seeBusinessPage);

@@ -241,6 +241,25 @@ const placeOrder = async (req, res) => {
     }
 }
 
+const customerProfile = async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const customer = await Customer.findById(userId).select("-password");
+        if(!customer) {
+            return res.status(404).json({
+                message: "Customer not found"
+            });
+        }
+        res.status(200).json({
+            message: "Customer profile retrieved successfully",
+            customer
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error retrieving customer profile",
+            error
+        });
+
 const editCustomer = async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -283,5 +302,6 @@ module.exports = {
     seeBusinessPage,
     editCustomer,
     customerOrders,
+    customerProfile,
     placeOrder
 }
