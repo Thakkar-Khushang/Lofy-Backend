@@ -259,6 +259,8 @@ const customerProfile = async (req, res) => {
             message: "Error retrieving customer profile",
             error
         });
+    }
+}
 
 const editCustomer = async (req, res) => {
     try {
