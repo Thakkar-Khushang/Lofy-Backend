@@ -26,6 +26,7 @@ const businessSchema = mongoose.Schema({
     address: {type: String },
     city: {type: String },
     views: {type: Number, default: 0},
+    socialMediaLink: {type: String },
 })
 
 module.exports = mongoose.model("Business", businessSchema)

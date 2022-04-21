@@ -46,7 +46,7 @@ const login = async (req, res) => {
         const { email, password } = req.body;
         const business = await Business.findOne({ email });
         if (!business) {
-            return res.status(401).json({
+            return res.status(404).json({
                 message: "Business not found"
             });
         }
@@ -115,7 +115,7 @@ const updateProfile = async (req, res) => {
                 message: "Business not found"
             });
         }
-        const { name, address, city, phone, description, category, specialization } = req.body;
+        const { name, address, city, phone, description, category, specialization, socialMediaLink } = req.body;
         if(name) {
             business.name = name;
         }
@@ -136,6 +136,9 @@ const updateProfile = async (req, res) => {
         }
         if(specialization) {
             business.specialization = specialization;
+        }
+        if(socialMediaLink) {
+            business.socialMediaLink = socialMediaLink;
         }
         await business.save();
         res.status(200).json({

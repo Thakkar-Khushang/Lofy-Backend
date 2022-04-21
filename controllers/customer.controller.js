@@ -54,7 +54,7 @@ const login = async (req, res) => {
         const { email, password } = req.body;
         const customer = await Customer.findOne({ email });
         if (!customer) {
-            return res.status(401).json({
+            return res.status(404).json({
                 message: "Customer not found"
             });
         }
@@ -184,6 +184,7 @@ const customerOrders = async(req, res) =>{
             let business = await Business.findById(orders[i].business_id);
             for(let j = 0; j < orders[i].products.length; j++) {
                 const product = await Product.findById(orders[i].products[j].product_id).select("-business_id -__v");
+                product._doc.quantity = orders[i].products[j].quantity;
                 products.push(product);
             }
             orders[i]._doc.products = products;
