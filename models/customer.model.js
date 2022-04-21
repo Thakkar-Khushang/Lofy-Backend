@@ -19,7 +19,6 @@ const customerSchema = mongoose.Schema({
     password: {type: String, required: "Password is required"},
     address: {type: String },
     city: {type: String },
-    coordinates: {type: String },
 })
 
 module.exports = mongoose.model("Customer", customerSchema)
