@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const Business = require("../models/business.model");
 const Product = require("../models/product.model");
 const Order = require("../models/order.model");
+const verification = require("../middleware/sendEmail.js");
 
 const signup = (req, res) => {
     try {
@@ -24,13 +25,21 @@ const signup = (req, res) => {
                 },
                 process.env.JWT_SECRET_BUS,
                 {
-                  expiresIn: "30d",
+                  expiresIn: "1h",
                 }
-              );
-            res.status(201).json({
-                message: "Customer created successfully",
-                business,
-                token
+              )
+            verification(business.email, token, "business", (err, message)=>{
+                if(err) {
+                    res.status(500).json({
+                        message: "Error sending email",
+                        error: err
+                    });
+                } else {
+                    res.status(200).json({
+                        message: "Verification mail sent, please verify your email then login",
+                        business
+                    });
+                }
             });
         });
     } catch (error) {
@@ -208,6 +217,68 @@ const setOrderStatus = async (req, res) => {
         });
     }
 }
+
+const verifyBusiness = async (req, res) => {
+    try {
+        const userToken = req.params.token;
+        jwt.decode(userToken, process.env.JWT_SECRET_BUS, async(err, decoded) => {
+            if(err) {
+                return res.status(400).json({
+                    message: "Invalid token"
+                });
+            }
+            else{
+                const userId = decoded.userId;
+                const business = await Business.findById(userId);
+                if(!business) {
+                    return res.status(404).json({
+                        message: "Customer not found"
+                    });
+                }
+                business.isVerified = true;
+                await business.save();
+                res.status(200).json({
+                    message: "Business verified successfully"
+                });
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error verifying customer",
+            error
+        });
+    }
+}
+
+const sendVerificationEmail = async (req, res) => {
+    try {
+        const email = req.body.email;
+        const business = await Business.findOne({ email });
+        if(!business) {
+            return res.status(404).json({
+                message: "Business not found"
+            });
+        }
+        const token = jwt.sign({ userId: business._id }, process.env.JWT_SECRET_BUS, { expiresIn: '1h' });
+        verification(email, token, "business", (err, info) => {
+            if(err) {
+                return res.status(500).json({
+                    message: "Error sending verification email"
+                });
+            }
+            else{
+                res.status(200).json({
+                    message: "Verification email sent successfully"
+                });
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error sending verification email",
+            error
+        });
+    }
+}
         
 
 module.exports = {
@@ -216,5 +287,7 @@ module.exports = {
     seeOwnPage,
     updateProfile,
     getOrders,
-    setOrderStatus
+    setOrderStatus,
+    sendVerificationEmail,
+    verifyBusiness
 }
