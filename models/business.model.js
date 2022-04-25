@@ -9,6 +9,8 @@ const businessSchema = mongoose.Schema({
     _id: mongoose.Schema.Types.ObjectId,
     name: {type: String },
     description: {type: String},
+    isVerified: {type: Boolean, default: false},
+    visible: {type: Boolean, default: false},
     category: {
         type: String,
         enum: ["Clothing", "Furniture", "Decor", "Cosmetics", "Food"]

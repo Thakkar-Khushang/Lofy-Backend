@@ -5,7 +5,7 @@ const Product = require("../models/product.model");
 const Order = require("../models/order.model");
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
-const { response } = require("express");
+const verification = require("../middleware/sendEmail");
 
 const signup = async (req, res) => {
     try {
@@ -32,13 +32,22 @@ const signup = async (req, res) => {
                 },
                 process.env.JWT_SECRET_CUST,
                 {
-                  expiresIn: "30d",
+                  expiresIn: "1h",
                 }
               );
-            res.status(201).json({
-                message: "Customer created successfully",
-                customer,
-                token
+            verification(customer.email, token, "customer", (err, message)=>{
+                if(err) {
+                    res.status(500).json({
+                        info: "Error sending email",
+                        message,
+                        error: err
+                    });
+                } else {
+                    res.status(200).json({
+                        message: "Verification mail sent, please verify your email then login",
+                        customer
+                    });
+                }
             });
         });
     } catch (error) {
@@ -95,7 +104,7 @@ const seeBusinesses = async (req, res) => {
     try {
         const userId = req.user.userId;
         const customer = await Customer.findById(userId).select("-password");
-        const businesses = await Business.find({ city: customer.city }).select("-password");
+        const businesses = await Business.find({ city: customer.city, isVerified: true, visible: true }).select("-password");
         if(businesses.length === 0) {
             return res.status(404).json({
                 message: "No businesses found"
@@ -297,6 +306,68 @@ const editCustomer = async (req, res) => {
     }
 }
 
+const verifyCustomer = async (req, res) => {
+    try {
+        const userToken = req.params.token;
+        jwt.decode(userToken, process.env.JWT_SECRET_CUST, async(err, decoded) => {
+            if(err) {
+                return res.status(400).json({
+                    message: "Invalid token"
+                });
+            }
+            else{
+                const userId = decoded.userId;
+                const customer = await Customer.findById(userId);
+                if(!customer) {
+                    return res.status(404).json({
+                        message: "Customer not found"
+                    });
+                }
+                customer.isVerified = true;
+                await customer.save();
+                res.status(200).json({
+                    message: "Customer verified successfully"
+                });
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error verifying customer",
+            error
+        });
+    }
+}
+
+const sendVerificationEmail = async (req, res) => {
+    try {
+        const email = req.body.email;
+        const customer = await Customer.findOne({ email });
+        if(!customer) {
+            return res.status(404).json({
+                message: "Customer not found"
+            });
+        }
+        const token = jwt.sign({ userId: customer._id }, process.env.JWT_SECRET_CUST, { expiresIn: '1h' });
+        verification(email, token, "customer", (err, info) => {
+            if(err) {
+                return res.status(500).json({
+                    message: "Error sending verification email"
+                });
+            }
+            else{
+                res.status(200).json({
+                    message: "Verification email sent successfully"
+                });
+            }
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error sending verification email",
+            error
+        });
+    }
+}
+
 module.exports = {
     signup,
     login,
@@ -305,5 +376,7 @@ module.exports = {
     editCustomer,
     customerOrders,
     customerProfile,
-    placeOrder
+    placeOrder,
+    verifyCustomer,
+    sendVerificationEmail
 }

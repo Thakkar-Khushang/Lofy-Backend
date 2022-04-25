@@ -16,6 +16,7 @@ const customerSchema = mongoose.Schema({
         unique: true,
         validate: [validateEmail, "Please fill a valid email address"]
     },
+    isVerified: {type: Boolean, default: false},
     password: {type: String, required: "Password is required"},
     address: {type: String },
     city: {type: String },
