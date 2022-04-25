@@ -279,6 +279,30 @@ const sendVerificationEmail = async (req, res) => {
         });
     }
 }
+
+const setVisibility = async (req, res) => {
+    try {
+        const businessId = req.user.userId;
+        const business = await Business.findById(businessId).select("-password");
+        if(!business) {
+            return res.status(404).json({
+                message: "Business not found"
+            });
+        }
+        const visible = business.visible;
+        business.visible = !visible;
+        await business.save();
+        res.status(200).json({
+            message: "Business visibility updated successfully",
+            business
+        });
+    } catch (error) {
+        res.status(500).json({
+            message: "Error updating business visibility",
+            error
+        });
+    }
+}
         
 
 module.exports = {
@@ -289,5 +313,6 @@ module.exports = {
     getOrders,
     setOrderStatus,
     sendVerificationEmail,
-    verifyBusiness
+    verifyBusiness,
+    setVisibility
 }
