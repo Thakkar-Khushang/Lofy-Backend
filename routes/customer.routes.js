@@ -12,6 +12,6 @@ router.get("/see-business/:id", checkAuthCustomer, customerControllers.seeBusine
 router.get("/get-orders", checkAuthCustomer, customerControllers.customerOrders);
 router.post("/place-order", checkAuthCustomer, customerControllers.placeOrder);
 router.post("/send-email", customerControllers.sendVerificationEmail);
-router.get("/verify/:token", customerControllers.verifyCustomer);
+router.get("/verify", customerControllers.verifyCustomer);
 
 module.exports = router;

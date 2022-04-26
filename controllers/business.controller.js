@@ -15,7 +15,6 @@ const signup = (req, res) => {
                 email,
                 password: hash
             });
-            await business.save();
             const token = jwt.sign(
                 {
                   userId: business._id,
@@ -28,13 +27,14 @@ const signup = (req, res) => {
                   expiresIn: "1h",
                 }
               )
-            verification(business.email, token, "business", (err, message)=>{
+            verification(business.email, "business", token, async (err, message)=>{
                 if(err) {
                     res.status(500).json({
-                        message: "Error sending email",
+                        message: "Error sending email, please try again later",
                         error: err
                     });
                 } else {
+                    await business.save();
                     res.status(200).json({
                         message: "Verification mail sent, please verify your email then login",
                         business
@@ -57,6 +57,11 @@ const login = async (req, res) => {
         if (!business) {
             return res.status(404).json({
                 message: "Business not found"
+            });
+        }
+        if(!business.isVerified) {
+            return res.status(400).json({
+                message: "Please verify your account first"
             });
         }
         bcrypt.compare(password, business.password, function(err, result) {
@@ -124,15 +129,12 @@ const updateProfile = async (req, res) => {
                 message: "Business not found"
             });
         }
-        const { name, address, city, phone, description, category, specialization, socialMediaLink } = req.body;
+        const { name, address, phone, description, category, specialization, socialMediaLink } = req.body;
         if(name) {
             business.name = name;
         }
         if(address) {
             business.address = address;
-        }
-        if(city) {
-            business.city = city;
         }
         if(phone) {
             business.phone = phone;
@@ -220,8 +222,8 @@ const setOrderStatus = async (req, res) => {
 
 const verifyBusiness = async (req, res) => {
     try {
-        const userToken = req.params.token;
-        jwt.decode(userToken, process.env.JWT_SECRET_BUS, async(err, decoded) => {
+        const userToken = req.query.token;
+        jwt.verify(userToken, process.env.JWT_SECRET_BUS, async(err, decoded) => {
             if(err) {
                 return res.status(400).json({
                     message: "Invalid token"
@@ -259,8 +261,13 @@ const sendVerificationEmail = async (req, res) => {
                 message: "Business not found"
             });
         }
+        if(business.isVerified) {
+            return res.status(400).json({
+                message: "Business already verified"
+            });
+        }
         const token = jwt.sign({ userId: business._id }, process.env.JWT_SECRET_BUS, { expiresIn: '1h' });
-        verification(email, token, "business", (err, info) => {
+        verification(email, "business", token, (err, info) => {
             if(err) {
                 return res.status(500).json({
                     message: "Error sending verification email"

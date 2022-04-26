@@ -35,7 +35,7 @@ const signup = async (req, res) => {
                   expiresIn: "1h",
                 }
               );
-            verification(customer.email, token, "customer", (err, message)=>{
+            verification(customer.email, "customer", token, (err, message)=>{
                 if(err) {
                     res.status(500).json({
                         info: "Error sending email",
@@ -65,6 +65,11 @@ const login = async (req, res) => {
         if (!customer) {
             return res.status(404).json({
                 message: "Customer not found"
+            });
+        }
+        if(!customer.isVerified) {
+            return res.status(400).json({
+                message: "Please verify your account first"
             });
         }
         bcrypt.compare(password, customer.password, function(err, result) {
@@ -104,7 +109,7 @@ const seeBusinesses = async (req, res) => {
     try {
         const userId = req.user.userId;
         const customer = await Customer.findById(userId).select("-password");
-        const businesses = await Business.find({ city: customer.city, isVerified: true, visible: true }).select("-password");
+        const businesses = await Business.find({ "address.city": customer.address.city, isVerified: true, visible: true }).select("-password");
         if(businesses.length === 0) {
             return res.status(404).json({
                 message: "No businesses found"
@@ -280,15 +285,12 @@ const editCustomer = async (req, res) => {
                 message: "Customer not found"
             });
         }
-        const { name, address, city, phone } = req.body;
+        const { name, address, phone } = req.body;
         if(name) {
             customer.name = name;
         }
         if(address) {
             customer.address = address;
-        }
-        if(city) {
-            customer.city = city;
         }
         if(phone) {
             customer.phone = phone;
@@ -308,8 +310,8 @@ const editCustomer = async (req, res) => {
 
 const verifyCustomer = async (req, res) => {
     try {
-        const userToken = req.params.token;
-        jwt.decode(userToken, process.env.JWT_SECRET_CUST, async(err, decoded) => {
+        const userToken = req.query.token;
+        jwt.verify(userToken, process.env.JWT_SECRET_CUST, async(err, decoded) => {
             if(err) {
                 return res.status(400).json({
                     message: "Invalid token"
@@ -347,8 +349,13 @@ const sendVerificationEmail = async (req, res) => {
                 message: "Customer not found"
             });
         }
+        if(customer.isVerified) {
+            return res.status(400).json({
+                message: "Customer already verified"
+            });
+        }
         const token = jwt.sign({ userId: customer._id }, process.env.JWT_SECRET_CUST, { expiresIn: '1h' });
-        verification(email, token, "customer", (err, info) => {
+        verification(email, "customer", token, (err, info) => {
             if(err) {
                 return res.status(500).json({
                     message: "Error sending verification email"

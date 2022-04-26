@@ -18,8 +18,15 @@ const customerSchema = mongoose.Schema({
     },
     isVerified: {type: Boolean, default: false},
     password: {type: String, required: "Password is required"},
-    address: {type: String },
-    city: {type: String },
+    address: {
+        type: {
+          line1: { type: String },
+          line2: { type: String },
+          city: { type: String },
+          state: { type: String },
+          zip: { type: String },
+        },
+    },
 })
 
 module.exports = mongoose.model("Customer", customerSchema)

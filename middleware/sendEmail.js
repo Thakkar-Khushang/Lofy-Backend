@@ -10,7 +10,7 @@ let transporter = nodemailer.createTransport({
   });
 
   const verification = (email, type, token, callback) => {
-    const url = `https://lofy-backend.herokuapp.com/${type}/verify/${token}`;
+    const url = `https://lofy-backend.herokuapp.com/${type}/verify/?token=${token}`;
     let mailOptions={
         to : email,
         subject : "Lofy: Please confirm your Email account",

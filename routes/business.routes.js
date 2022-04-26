@@ -10,7 +10,7 @@ router.patch("/update-profile", checkAuthBusiness, businessControllers.updatePro
 router.patch("/set-visibility", checkAuthBusiness, businessControllers.setVisibility);
 router.get("/orders", checkAuthBusiness, businessControllers.getOrders);
 router.post("/send-email", businessControllers.sendVerificationEmail);
-router.get("/verify/:token", businessControllers.verifyBusiness);
+router.get("/verify", businessControllers.verifyBusiness);
 router.patch("/order/status", checkAuthBusiness, businessControllers.setOrderStatus);
 
 module.exports = router;
