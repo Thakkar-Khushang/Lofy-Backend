@@ -131,6 +131,8 @@ const addReview = async (req, res) => {
         for(let i = 0; i < order.products.length; i++) {
             if(order.products[i].product_id+"" === req.params.id) {
                 order.products[i].reviewed = true;
+                order.products[i].review = review;
+                order.products[i].rating = rating;
                 break;
             }
         }
