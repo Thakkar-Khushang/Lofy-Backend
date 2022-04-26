@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const Product = require("../models/product.model");
 const Customer = require("../models/customer.model");
+const Order = require("../models/order.model");
 
 const getAllProducts = async (req, res) => {
     try {
@@ -110,12 +111,30 @@ const addReview = async (req, res) => {
                 message: "Customer not found"
             });
         }
-        const {review, rating} = req.body;
+        const {review, rating, orderId} = req.body;
         if(!review || !rating) {
             return res.status(400).json({
                 message: "Review and rating are required"
             });
         }
+        if(!orderId) {
+            return res.status(400).json({
+                message: "Order id is required"
+            });
+        }
+        const order = await Order.findById(orderId);
+        if(!order) {
+            return res.status(404).json({
+                message: "Order not found"
+            });
+        }
+        for(let i = 0; i < order.products.length; i++) {
+            if(order.products[i].product_id+"" === req.params.id) {
+                order.products[i].reviewed = true;
+                break;
+            }
+        }
+        await order.save();
         const product = await Product.findById(req.params.id);
         product.reviews.push({
             customer_id,
