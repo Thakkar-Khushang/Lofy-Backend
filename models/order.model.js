@@ -13,6 +13,8 @@ const orderSchema = mongoose.Schema({
         product_id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
         quantity: {type: Number },
         reviewed: {type: Boolean, default: false},
+        review: {type: String },
+        rating: {type: Number }
     }],
     address:  {
         type: {
