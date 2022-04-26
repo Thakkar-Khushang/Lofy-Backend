@@ -11,7 +11,8 @@ const orderSchema = mongoose.Schema({
     business_id: { type: mongoose.Schema.Types.ObjectId, ref: "Business" },
     products: [{
         product_id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-        quantity: {type: Number }
+        quantity: {type: Number },
+        reviewed: {type: Boolean, default: false},
     }],
     address:  {
         type: {
