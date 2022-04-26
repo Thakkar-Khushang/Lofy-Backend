@@ -13,7 +13,15 @@ const orderSchema = mongoose.Schema({
         product_id: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
         quantity: {type: Number }
     }],
-    address: {type: String },
+    address:  {
+        type: {
+          line1: { type: String },
+          line2: { type: String },
+          city: { type: String },
+          state: { type: String },
+          zip: { type: String },
+        },
+      },
 })
 
 module.exports = mongoose.model("Order", orderSchema)

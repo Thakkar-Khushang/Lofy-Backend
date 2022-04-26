@@ -240,7 +240,13 @@ const placeOrder = async (req, res) => {
             customer_id: userId,
             business_id: businessId,
             products,
-            address: customer.address
+            address: {
+                line1: customer.address.line1,
+                line2: customer.address.line2,
+                city: customer.address.city,
+                state: customer.address.state,
+                zip: customer.address.zip
+            }
         })
         await order.save();
         res.status(200).json({
