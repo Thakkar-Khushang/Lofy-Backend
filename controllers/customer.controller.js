@@ -199,6 +199,7 @@ const customerOrders = async(req, res) =>{
             for(let j = 0; j < orders[i].products.length; j++) {
                 const product = await Product.findById(orders[i].products[j].product_id).select("-business_id -__v");
                 product._doc.quantity = orders[i].products[j].quantity;
+                product._doc.reviewed = orders[i].products[j].reviewed;
                 products.push(product);
             }
             orders[i]._doc.products = products;
