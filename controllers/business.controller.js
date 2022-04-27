@@ -179,6 +179,7 @@ const getOrders = async (req, res) => {
             let products = []
             for(let j = 0; j < orders[i].products.length; j++) {
                 const product = await Product.findById(orders[i].products[j].product_id);
+                product._doc.quantity = orders[i].products[j].quantity;
                 products.push(product);
             }
             orders[i]._doc.products = products;
